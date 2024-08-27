@@ -10,6 +10,7 @@ import tqdm
 import argparse
 import gc
 from vit.model import ViT, ViTBase, ViTHuge, ViTLarge
+from vit.dataset import ImageDataset
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -70,6 +71,9 @@ def parse_args():
     parser.add_argument("--dataset-dir", default="",
                         type=str)
     
+    parser.add_argument("--annotated-file", default="",
+                        type=str)
+    
     parser.add_argument("--outputs-dir", default="./outputs",
                         type=str)
     
@@ -117,14 +121,6 @@ def train():
 
     loss_fn = torch.nn.CrossEntropyLoss()
 
-    # if os.path.isdir(os.path.join(args.dataset_dir, "valid")) == False:
-    #     if os.path.isdir(os.path.join(args.dataset_dir, "validation")) == False:
-    #         print("The directory must containing training folder and validation folder")
-    #         raise NotADirectoryError("The validation folder do not exist")
-        
-    #     else:
-    #         valid_ds = Dataset()
-
     transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
@@ -132,7 +128,23 @@ def train():
         transforms.RandomHorizontalFlip(),
     ])
    
-    if args.dataset_dir == "":
+    if args.dataset_dir is not None:
+        try:
+            labels_path = os.path.join(args.dataset_dir, args.annotated_file)
+            train_set = ImageDataset(annotation_file=labels_path,
+                                     img_dir=args.dataset_dir,
+                                     transform=transform,
+                                     train=True)
+            
+            valid_set = ImageDataset(annotation_file=labels_path,
+                                     img_dir=args.dataset_dir,
+                                     transform=transform,
+                                     train=False)
+        
+        except IsADirectoryError:
+            print("Train set or Valid set is not exist")
+        
+    else:
         print("Data folder is not set.Use CIFAR10 dataset")
 
         args.image_channels = 3
@@ -141,19 +153,17 @@ def train():
         train_set = torchvision.datasets.CIFAR10(root="./data", train=True,
                                                  download=True, transform=transform)
 
-        train_ds = torch.utils.data.DataLoader(train_set, batch_size=args.batch_size,
-                                               shuffle=True, num_workers=2)
-
-        test_set = torchvision.datasets.CIFAR10(root="./data", train=False,
+        valid_set = torchvision.datasets.CIFAR10(root="./data", train=False,
                                                 download=True, transform=transform)
-    
-        test_ds = torch.utils.data.DataLoader(test_set, batch_size=args.batch_size,
-                                              shuffle=True, num_workers=2)
-    
+        
     # train_ds = Dataset()
 
-    # train_dataloader = torch.utils.data.DataLoader()
-    # valid_dataloader = torch.utils.data.DataLoader()
+    train_ds = torch.utils.data.DataLoader(train_set, batch_size=args.batch_size,
+                                               shuffle=True, num_workers=2)
+    
+    valid_ds = torch.utils.data.DataLoader(valid_set, batch_size=args.batch_size,
+                                              shuffle=True, num_workers=2)
+    
     #torch.cuda.empty_cache()
     #gc.collect()
 
@@ -185,7 +195,7 @@ def train():
         model.eval()
 
         with torch.no_grad():
-            for batch_idx, (X, y) in enumerate(test_ds):
+            for batch_idx, (X, y) in enumerate(valid_ds):
                 X, y = X.to("cuda"), y.to("cuda")
                 output = model(X)
 
@@ -193,7 +203,7 @@ def train():
 
                 val_loss += vloss
 
-        val_loss /= len(test_ds)
+        val_loss /= len(valid_ds)
 
         wandb.log({
             "training loss:": train_loss,

@@ -1,0 +1,19 @@
+__pycache__/
+
+__pypakages__/
+
+# Enviroments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# checker
+.pyre
+
+*.log
+
+

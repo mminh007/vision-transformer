@@ -37,6 +37,8 @@ class PatchEmbedding(nn.Module):
         super().__init__()
         
         self.num_patches = (image_size // patch_size) ** 2
+
+        self.flatten = nn.Flatten(start_dim=1, end_dim=2)
         
         self.patches = Patches(kernel_size=patch_size, stride=patch_size, in_chans=in_chans, embed_dim=embed_dim)
         
@@ -62,9 +64,11 @@ class PatchEmbedding(nn.Module):
             shape (..., S + 1, D) with S = (HW) / (P^2). Example (64, 65, 768)
         
         """
-
-        x = self.patches(images)
-
+        x = self.patches(images) # (B, patch_size, patch_size, embed_dim)
+        
+        #flatten (B, patch_size, patch_size, embed_dim) -> (B, patch_size * patch_size, embed_dim)
+        x = self.flatten(x)
+        
         batch_size = x.shape[0]
         hidden_size = x.shape[-1] # hidden_size is embed_dim
 

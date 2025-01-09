@@ -1,4 +1,3 @@
-import torch
 import torch.nn as nn
 from vit.embedding import PatchEmbedding
 from vit.encoder import TransformerEncoder
@@ -27,7 +26,8 @@ class ViT(nn.Module):
         #     transforms.RandomRotation(),
         # ])
 
-        self.embedding = PatchEmbedding(patch_size=patch_size, image_size=image_size, embed_dim=embed_dim, in_chans=in_chans)
+        self.embedding = PatchEmbedding(patch_size=patch_size, image_size=image_size, 
+                                        embed_dim=embed_dim, in_chans=in_chans)
 
         self.encoder = TransformerEncoder(
             num_heads=num_heads,
@@ -70,7 +70,8 @@ class ViT(nn.Module):
 
 
 class ViTBase(ViT):
-    def __init__(self, num_classes=10, image_size=224, dropout=0.1, norm_eps=1e-12, in_chans = 3):
+    def __init__(self, num_classes=10, image_size=224, dropout=0.1, 
+                 norm_eps=1e-12, in_chans = 3):
         super().__init__(depth=12,
                          num_heads=12,
                          embed_dim=768,

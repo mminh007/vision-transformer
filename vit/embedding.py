@@ -72,9 +72,9 @@ class PatchEmbedding(nn.Module):
         batch_size = x.shape[0]
         hidden_size = x.shape[-1] # hidden_size is embed_dim
 
-        cls_broadcast = torch.broadcast_to(self.cls_token, (batch_size, 1, hidden_size)) # (1, 1, 768) -> (batch_size, 1, hidden_size)
+        cls_broadcast = self.cls_token.expand(batch_size, 1, hidden_size) # (1, 1, 768) -> (batch_size, 1, hidden_size)
 
-        x_concat = torch.concat((cls_broadcast, x), dim = 1)
+        x_concat = torch.cat((cls_broadcast, x), dim = 1)
 
         encoded_patches = x_concat + self.position_embedding
 

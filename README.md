@@ -10,7 +10,7 @@ Reimplementation of Vision Transformer model *based on* [The official implementa
 
 ---
 ## Overview
-Click <a href= ./vit/README.md> here </a> for explained  VIT's architecture
+Click <a href= ./vit/VIT.md> here </a> for explained  VIT's architecture
 
 ---
 ## Installing dependencies

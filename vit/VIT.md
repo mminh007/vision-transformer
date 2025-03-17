@@ -23,7 +23,7 @@ Inspired by the Transformer scaling successes in NLP, authors experiment with ap
 ---
 
 ## Architecture
-The standard Transformer receives as input a 1D sequence of token embeddings. To handle 2D images, authors reshape the image $ \bold{x} \in \mathbb{R}^{H \times W \times C}$ into a sequence of flattened 2D patches $\bold{x}_p$ $\in \mathbb{R}^{N \times (P^2.C)}$, where $(H,W)$ is the resolution of the original image, $C$ is the number of channels, $(P,P)$ is the resolution of each image path, and $N = HW/P^2$ is the resulting number of patches, which also serves as the efficitive input length for the Transformer.
+The standard Transformer receives as input a 1D sequence of token embeddings. To handle 2D images, authors reshape the image $\bold{x} \in \mathbb{R}^{H \times W \times C}$ into a sequence of flattened 2D patches $\bold{x}_p$ $\in \mathbb{R}^{N \times (P^2.C)}$, where $(H,W)$ is the resolution of the original image, $C$ is the number of channels, $(P,P)$ is the resolution of each image path, and $N = HW/P^2$ is the resulting number of patches, which also serves as the efficitive input length for the Transformer.
 
 **The Transformer uses constant laten vector size $D$ through all of its layers**, so authors flatten the patches and map to $D$ dimensions with a trainable linear projection (Eq.1). Authors refer to the output of this projection as the patch embeddings.  
 

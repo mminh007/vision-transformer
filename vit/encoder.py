@@ -15,7 +15,7 @@ class MLPBlock(nn.Module):
             nn.GELU(),
             nn.Dropout(p=drop_out),
             nn.Linear(in_features=mlp_dim, out_features=embed_dim),
-            #nn.Dropout(p=drop_out)
+            nn.Dropout(p=drop_out)
         )
 
         self.norm = nn.LayerNorm(normalized_shape=embed_dim, eps=norm_eps)
@@ -32,18 +32,18 @@ class TransformerBlock(nn.Module):
                  num_heads,
                  embed_dim,
                  mlp_dim,
-                 dropout = 0,
+                 drop_out = 0,
                  norm_eps= 1e-12):
         
         super().__init__()
         self.attention = nn.MultiheadAttention(embed_dim=embed_dim,
                                                num_heads=num_heads,
-                                               dropout=dropout,
+                                               dropout=drop_out,
                                                batch_first=True)
         
         self.norm_attention = nn.LayerNorm(normalized_shape=embed_dim, eps=norm_eps)
 
-        self.mlp = MLPBlock(embed_dim=embed_dim, mlp_dim=mlp_dim)
+        self.mlp = MLPBlock(embed_dim=embed_dim, mlp_dim=mlp_dim, drop_out=drop_out)
         
         self.norm_mlp = nn.LayerNorm(normalized_shape=embed_dim, eps = norm_eps)
 
@@ -88,19 +88,19 @@ class TransformerEncoder(nn.Module):
                  num_heads = 12,
                  embed_dim = 768,
                  mlp_dim = 3072,
-                 dropout=0.1,
+                 drop_out=0.1,
                  norm_eps=1e-12):
         """
             Transformer Encoder which comprises several transformer layers
             Paramerters:
             ------------
-            num_layers: int
+            depth: int
                 number of transformer layers. Exp: 12
             num_heads: int
                 number of heads of multi-head attention layer. Exp: 12
             embed_dim: int
                 size of each attention head for value
-            ml_dim: int
+            mlp_dim: int
                 mlp size or dimension of hidden layer of mlp block
             dropout: float
                 dropout rate of mlp block
@@ -109,18 +109,18 @@ class TransformerEncoder(nn.Module):
         
         """
         super().__init__()
-        self.encoder = nn.ModuleList([
+        self.layers = nn.ModuleList([
             TransformerBlock(num_heads=num_heads,
                              embed_dim=embed_dim,
                              mlp_dim=mlp_dim,
-                             dropout=dropout,
+                             drop_out=drop_out,
                              norm_eps=norm_eps)
             for _ in range(depth)
         ])
 
 
-        def forward(self, inputs, *args, **kwargs):
-            """
+    def forward(self, x, *args, **kwargs):
+        """
                 Parameters:
                 -----------
                 inputs: tensor
@@ -133,10 +133,11 @@ class TransformerEncoder(nn.Module):
                     attention + mlp outputs
                     shape (..., num_patches + 1, embed_dim). Example: (64, 65, 768)
 
-            """
-            outputs = self.encoder(inputs, *args, **kwargs)
+        """
+        for layer in self.layers:
+            x = layer(x)
 
-            return outputs
+        return x
 
 
 

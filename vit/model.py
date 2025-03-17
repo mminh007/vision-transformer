@@ -61,10 +61,10 @@ class ViT(nn.Module):
         # embedded class token
         encoded_cls = encoded[:, 0]
 
-        y = self.layer_norm(encoded_cls)
+        #y = self.layer_norm(encoded_cls)
 
         # head mlp
-        outputs = self.mlp_head(y)
+        outputs = self.mlp_head(encoded_cls)
 
         return outputs
 

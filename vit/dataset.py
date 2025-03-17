@@ -6,7 +6,7 @@ import cv2
 
 class ImageDataset(Dataset):
     def __init__(self, annotation_file, img_dir, transform=None, target_transform=None, train=True):
-        self.img_labels = pd.read.csv(annotation_file)
+        self.img_labels = pd.read_csv(annotation_file)
         self.type = "/train" if train else "/valid"
         self.img_dir = img_dir + self.type
         self.transform = transform

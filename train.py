@@ -6,7 +6,7 @@ import torch.utils.data
 import torch.utils.data.dataloader
 import torchvision.transforms as transforms
 import torchvision
-import tqdm
+from tqdm import tqdm
 import argparse
 import gc
 from vit.model import ViT, ViTBase, ViTHuge, ViTLarge
@@ -68,10 +68,10 @@ def parse_args():
     parser.add_argument("--norm-eps", default=1e-12,
                         type=float)
 
-    parser.add_argument("--dataset-dir", default="",
+    parser.add_argument("--dataset-dir", default=None,
                         type=str)
     
-    parser.add_argument("--annotated-file", default="",
+    parser.add_argument("--annotated-file", default=None,
                         type=str)
     
     parser.add_argument("--outputs-dir", default="./outputs",
@@ -105,7 +105,7 @@ def train():
         model = ViT(depth=args.depth,
                     num_heads=args.num_heads,
                     embed_dim=args.embed_dim,
-                    mlp_dim=args.mp_dim,
+                    mlp_dim=args.mlp_dim,
                     num_classes=args.num_classes,
                     patch_size=args.patch_size,
                     image_size=args.image_size,
@@ -148,7 +148,7 @@ def train():
         print("Data folder is not set.Use CIFAR10 dataset")
 
         args.image_channels = 3
-        args.num_classess = 10
+        args.num_classes = 10
 
         train_set = torchvision.datasets.CIFAR10(root="./data", train=True,
                                                  download=True, transform=transform)
@@ -167,8 +167,8 @@ def train():
     #torch.cuda.empty_cache()
     #gc.collect()
 
-    if torch.cuda.is_available():
-        model.cuda()
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model.to(device)
 
     for epoch in range(args.epochs):
         model.train()
@@ -178,7 +178,7 @@ def train():
         val_loss, val_ac = 0,0
 
         for batch_idx, (X, y) in enumerate(tqdm(train_ds), start = 1):
-            X, y = X.to("cuda"), y.to("cuda")
+            X, y = X.to(device), y.to(device)
 
             y_pred = model(X)
             loss = loss_fn(y_pred, y)
@@ -189,27 +189,28 @@ def train():
             loss.backward()
             optimizer.step()
         
-        train_losss /= len(train_ds)
+        train_loss /= len(train_ds)
         #train_acc /= len(train_dataloader)
  
         model.eval()
 
         with torch.no_grad():
             for batch_idx, (X, y) in enumerate(valid_ds):
-                X, y = X.to("cuda"), y.to("cuda")
+                X, y = X.to(device), y.to(device)
                 output = model(X)
 
                 vloss = loss_fn(output, y)
 
-                val_loss += vloss
+                val_loss += vloss.item()
 
         val_loss /= len(valid_ds)
-
-        wandb.log({
-            "training loss:": train_loss,
-            "validation loss:": val_loss,
-            "Epoch:": epoch,
-        })
+        
+        if args.wandb_logger:
+            wandb.log({
+                "training loss:": train_loss,
+                "validation loss:": val_loss,
+                "Epoch:": epoch,
+            })
 
     
     save_path = os.path.join(args.outputs_dir, "ViT_Classifier.pt")
